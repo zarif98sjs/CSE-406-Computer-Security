@@ -98,7 +98,7 @@ def main():
     print(unencrypted_blob[0:10])
     print(decrypted_blob[0:10])
 
-    #Write the decrypted contents to a file
+    # Write the decrypted contents to a file
     fd = open("test_rev.png", "wb")
     fd.write(decrypted_blob)
     fd.close()  

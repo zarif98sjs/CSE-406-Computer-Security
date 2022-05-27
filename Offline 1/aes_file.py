@@ -162,6 +162,11 @@ def convertTo1DHexArray(content):
         hexArray.append(content[i].encode().hex())
     return hexArray
 
+def convertTo1DHexArrayFile(content):
+    hexArray = []
+    for i in range(len(content)):
+        hexArray.append( format(content[i], 'x'))
+    return hexArray
 
 """
 trims or pads key
@@ -255,8 +260,14 @@ def convert2DTo1D(mat):
 
 def print1DBitVectorASCII(vec):
     for i in range(len(vec)):
-        print(vec[i].get_bitvector_in_ascii(), end='')
+        print(vec[i].get_bitvector_in_ascii(), end=' ')
     print("\n")
+
+def outputToFile(vec):
+    ret = []
+    for i in range(len(vec)):
+        ret.append(vec[i].intValue())
+    return bytes(ret)
 
 def convertTo1DBitVectorASCII(vec):
     ret = []
@@ -305,7 +316,6 @@ def decryptAll(aesLen,cipherTextAra,allKeys):
 def encrypt(aesLen,text,allKeys):
 
     COL = aesLen // 32        # Matrix column
-
     crpytic = convertTo2DHexArray(text)
 
     # add round key
@@ -342,82 +352,15 @@ def printCypherTextHex(crypticAra):
     ret = []
     for i in range(len(crypticAra)):
         cryptic1D = convert2DTo1D(crypticAra[i])
-        toAdd = convertTo1DBitVectorHex(cryptic1D)
-        toAdd = ''.join(toAdd)
-        ret.append(toAdd)
-    return ret # Array of hex strings, one element per block
-    # retStr = ''.join(ret)
-    # print("Hex : ",retStr)
-    # return retStr
-def reconstruct2DfromHexAll(hexStrAra):
-    ret = []
-    for i in range(len(hexStrAra)):
-        ret.append(reconstruct2DfromHex(hexStrAra[i]))
-    return ret
-
-def reconstruct2DfromHex(hexStr):
-    # convert hexStr to 1D array
-    hex1D = []
-    for i in range(0,len(hexStr),2):
-        hex1D.append(hexStr[i:i+2])
-    # print(hex1D)
-    # convert 1D array to 2D array
-    hex2D = convertTo2DHexArray(hex1D)
-    return hex2D
+        ret.extend(convertTo1DBitVectorHex(cryptic1D))
+    print("Hex : ",''.join(ret))
 
 def printCypherTextASCII(crypticAra):
     ret = []
     for i in range(len(crypticAra)):
         cryptic1D = convert2DTo1D(crypticAra[i])
-        ret.append(convertTo1DBitVectorASCII(cryptic1D))
+        ret.extend(convertTo1DBitVectorASCII(cryptic1D))
     print("ASCII : ",ret)
-
-
-def AESEncrypt(aesLen,content,key):
-    ## KEY
-    key = processKey(aesLen,key)
-    print("KEY GENERATION STARTED")
-    allKeys = generateKey(aesLen,key)
-    # printAllKeys(allKeys)
-
-    ## TEXT
-    text = convertTo1DHexArray(content)
-
-    # insert padding
-    blockSize = aesLen//8
-    textLen = len(text)
-    fillerCount = 0
-    while((textLen+fillerCount)%blockSize != 0):
-        text.append("00")
-        fillerCount += 1
-
-    ## ENCRYPT
-    print("ENCRYPTION STARTED")
-    crypticAra = encryptAll(aesLen,text,allKeys)
-    hexStrAra = printCypherTextHex(crypticAra)
-    return hexStrAra , fillerCount
-
-def AESDecrypt(aesLen,hexStrAra,key,fillerCount):
-
-    ## KEY
-    key = processKey(aesLen,key)
-    print("KEY GENERATION STARTED")
-    allKeys = generateKey(aesLen,key)
-
-    hex2DAll = reconstruct2DfromHexAll(hexStrAra)
-    # print("RECONSTRUCTED HEX : ")
-    # print2DBitVectorHex(hex2D)
-    # print2DBitVectorHex(crypticAra[0])
-    ## DECRYPT
-    print("DECRYPTION STARTED")
-    decrpytic = decryptAll(aesLen,hex2DAll,allKeys)
-
-    # remove padding
-    while fillerCount > 0:
-        decrpytic.pop()
-        fillerCount -= 1
-
-    print1DBitVectorASCII(decrpytic)
 
 def AES(aesLen,content,key):
 
@@ -428,29 +371,25 @@ def AES(aesLen,content,key):
     # printAllKeys(allKeys)
 
     ## TEXT
-    text = convertTo1DHexArray(content)
+    text = convertTo1DHexArrayFile(content)
 
     # insert padding
     blockSize = aesLen//8
     textLen = len(text)
     fillerCount = 0
     while((textLen+fillerCount)%blockSize != 0):
-        text.append("00")
+        text.append("02")
         fillerCount += 1
 
     ## ENCRYPT
     print("ENCRYPTION STARTED")
     crypticAra = encryptAll(aesLen,text,allKeys)
-    hexStrAra = printCypherTextHex(crypticAra)
-    print(hexStrAra)
-    # printCypherTextASCII(crypticAra)
-    hex2DAll = reconstruct2DfromHexAll(hexStrAra)
-    # print("RECONSTRUCTED HEX : ")
-    # print2DBitVectorHex(hex2D)
-    # print2DBitVectorHex(crypticAra[0])
+    printCypherTextHex(crypticAra)
+    printCypherTextASCII(crypticAra)
+
     ## DECRYPT
     print("DECRYPTION STARTED")
-    decrpytic = decryptAll(aesLen,hex2DAll,allKeys)
+    decrpytic = decryptAll(aesLen,crypticAra,allKeys)
 
     # remove padding
     while fillerCount > 0:
@@ -458,13 +397,23 @@ def AES(aesLen,content,key):
         fillerCount -= 1
 
     print1DBitVectorASCII(decrpytic)
+    decrypted_blob = outputToFile(decrpytic)
+
+    # Write the decrypted contents to a file
+    fd = open("square_rev.png", "wb")
+    fd.write(decrypted_blob)
+    fd.close()  
     
-# def main():
-#     key = "BUET CSE17 Batch"
-#     # text = "Two One Nine Tw"
-#     text = "CanTheyDoTheirFest"
-#     # key = "Thats my Kung Fu"
-#     AES(128, text , key)
+def main():
+    key = "BUET CSE17 Batch"
+    # text = "Two One Nine Tw"
+    fd = open("square.png", "rb")
+    unencrypted_blob = fd.read()
+    print(len(unencrypted_blob))
+    fd.close()
+    # text = "CanTheyDoTheirFe"
+    # key = "Thats my Kung Fu"
+    hexStrAra = AES(128, unencrypted_blob , key)
 
 
-# main()
+main()
