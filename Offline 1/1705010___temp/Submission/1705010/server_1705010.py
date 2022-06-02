@@ -1,8 +1,17 @@
 from email import message
-from aes import *
-from rsa_bv import *
+from aes_1705010 import *
+from rsa_1705010 import *
 # first of all import the socket library
-import socket,pickle,os   
+import socket,pickle,os  
+
+#############################################
+#############################################
+
+key = "BUET CSE17 Batch"
+text = "CanTheyDoTheirFest"
+
+#############################################
+#############################################
  
 # next create a socket object
 s = socket.socket()        
@@ -25,8 +34,7 @@ s.listen(5)
 print ("socket is listening")      
 
 
-key = "BUET CSE17 Batch"
-text = "CanTheyDoTheirFest"
+
 
 # do aes encryption on text
 hexStrAra, fillerCount, _ , _=  AESEncrypt(128, text , key)
@@ -47,6 +55,16 @@ with open(privateKeyFileName, "wb") as f:
 
 # do RSA on key, make encrypted key
 encryptedKey = RSAEncrypt(publicKey, key)
+
+class DataToSend:
+  def __init__(self,hexStrAra,fillerCount,encryptedKey,publicKey):
+    self.hexStrAra = hexStrAra
+    self.fillerCount = fillerCount
+    self.encryptedKey = encryptedKey
+    self.publicKey = publicKey
+
+data = DataToSend(hexStrAra,fillerCount,encryptedKey,publicKey)
+# print("hexStrAra : ", data.hexStrAra)
  
 # a forever loop until we interrupt it or
 # an error occurs
@@ -56,31 +74,13 @@ while True:
   c, addr = s.accept()    
   print ('Got connection from', addr )
 
-  # send [ cipher length ]
-  c.send(str(len(hexStrAra)).encode())
+  with c:
+    encryptedData = pickle.dumps(data)
+    c.sendall(encryptedData)
+    print('data sent')
 
-  # send [ ciphers ]
-  for i in range(len(hexStrAra)):
-    message = ''.join(hexStrAra[i])
-    print(message)
-    c.send(message.encode())
- 
-  # send [ filler count ] used for padding
-  c.send(str(fillerCount).encode())
-  print("filler count : ", fillerCount)
-
-  # send [ encrypted key ]
-  encryptedKeyString = pickle.dumps(encryptedKey)
-  c.send(encryptedKeyString)
-  print("encrypted key : ", encryptedKey)
-
-  # send [ public key ]
-  publicKeyString = pickle.dumps(publicKey)
-  c.send(publicKeyString)
-  print("public key : ", publicKey)
-
-  # Close the connection with the client
+  # # Close the connection with the client
   c.close()
    
-  # Breaking once connection closed
+  # # Breaking once connection closed
   break

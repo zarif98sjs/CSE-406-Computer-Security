@@ -1,8 +1,9 @@
 from email import message
-from aes import *
-from rsa_bv import *
-# first of all import the socket library
-import socket,pickle,os   
+from aes_file_1705010 import *        
+from rsa_1705010 import *
+import socket,pickle,os 
+
+BUFFER_SIZE = 4096 * 10
  
 # next create a socket object
 s = socket.socket()        
@@ -26,10 +27,14 @@ print ("socket is listening")
 
 
 key = "BUET CSE17 Batch"
-text = "CanTheyDoTheirFest"
+fName = "demo.txt"
+fd = open(fName, "rb")
+unencrypted_blob = fd.read()
+print(len(unencrypted_blob))
+fd.close()
 
-# do aes encryption on text
-hexStrAra, fillerCount, _ , _=  AESEncrypt(128, text , key)
+# do aes encryption on unencrypted_blob
+hexStrAra, fillerCount =  AESEncrypt(128, unencrypted_blob , key)
 
 # generate keys for RSA
 keyLength = 32
@@ -56,19 +61,17 @@ while True:
   c, addr = s.accept()    
   print ('Got connection from', addr )
 
+  # send a thank you message to the client. encoding to send byte type.
+
   # send [ cipher length ]
   c.send(str(len(hexStrAra)).encode())
 
   # send [ ciphers ]
   for i in range(len(hexStrAra)):
     message = ''.join(hexStrAra[i])
-    print(message)
     c.send(message.encode())
+    print("message : ", message)
  
-  # send [ filler count ] used for padding
-  c.send(str(fillerCount).encode())
-  print("filler count : ", fillerCount)
-
   # send [ encrypted key ]
   encryptedKeyString = pickle.dumps(encryptedKey)
   c.send(encryptedKeyString)
@@ -78,6 +81,10 @@ while True:
   publicKeyString = pickle.dumps(publicKey)
   c.send(publicKeyString)
   print("public key : ", publicKey)
+
+  # send [ filler count ] used for padding
+  c.send(str(fillerCount).encode())
+  print("filler count : ", fillerCount)
 
   # Close the connection with the client
   c.close()

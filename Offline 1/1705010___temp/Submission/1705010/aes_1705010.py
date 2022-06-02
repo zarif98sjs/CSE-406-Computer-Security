@@ -430,7 +430,7 @@ def hexToASCII(hexStr):
 def main():
     key = "BUET CSE17 Batch"
     text = "CanTheyDoTheirFe"
-    AES_TYPE = 256
+    AES_TYPE = 128
     
     # do aes encryption on text
     hexStrAra, fillerCount, key_scheduling_time, encryption_time =  AESEncrypt(AES_TYPE, text , key)

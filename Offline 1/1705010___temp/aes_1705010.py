@@ -377,6 +377,7 @@ def AESEncrypt(aesLen,content,key):
     key = processKey(aesLen,key)
     # print("KEY GENERATION STARTED")
     allKeys = generateKey(aesLen,key)
+    printAllKeys(allKeys)
     key_scheduling_time = time.time() - start_time
     # printAllKeys(allKeys)
 
@@ -428,9 +429,10 @@ def hexToASCII(hexStr):
     return str(binary_str,"ISO-8859-1")  
     
 def main():
-    key = "BUET CSE17 Batch"
-    text = "CanTheyDoTheirFe"
-    AES_TYPE = 256
+    # key = "BUET CSE17 Batch"
+    key = "Thats my Kung Fu"
+    text = "Two One Nine Two"
+    AES_TYPE = 128
     
     # do aes encryption on text
     hexStrAra, fillerCount, key_scheduling_time, encryption_time =  AESEncrypt(AES_TYPE, text , key)
@@ -466,4 +468,4 @@ def main():
 
 
 
-# main()
+main()

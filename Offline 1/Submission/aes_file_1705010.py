@@ -1,7 +1,6 @@
 # aes encryption
+# from crypt import crypt
 from BitVector import *
-import time
-import codecs
 
 roundD = {128 : 10, 192 : 12, 256 : 14}
 DEBUG = 0
@@ -163,6 +162,11 @@ def convertTo1DHexArray(content):
         hexArray.append(content[i].encode().hex())
     return hexArray
 
+def convertTo1DHexArrayFile(content):
+    hexArray = []
+    for i in range(len(content)):
+        hexArray.append( format(content[i], 'x'))
+    return hexArray
 
 """
 trims or pads key
@@ -175,7 +179,10 @@ def processKey(aesLen,key):
     # print(key.encode().hex())
     key1D = convertTo1DHexArray(key)
     # print(key1D)
+    # key2D = convertTo2DHexArray(key1D)
+    # print(key2D)
     return key1D
+    # key2D__ = getMatrixForm(key1D)
     
 
 """
@@ -253,8 +260,14 @@ def convert2DTo1D(mat):
 
 def print1DBitVectorASCII(vec):
     for i in range(len(vec)):
-        print(vec[i].get_bitvector_in_ascii(), end='')
+        print(vec[i].get_bitvector_in_ascii(), end=' ')
     print("\n")
+
+def outputToFile(vec):
+    ret = []
+    for i in range(len(vec)):
+        ret.append(vec[i].intValue())
+    return bytes(ret)
 
 def convertTo1DBitVectorASCII(vec):
     ret = []
@@ -303,7 +316,6 @@ def decryptAll(aesLen,cipherTextAra,allKeys):
 def encrypt(aesLen,text,allKeys):
 
     COL = aesLen // 32        # Matrix column
-
     crpytic = convertTo2DHexArray(text)
 
     # add round key
@@ -347,6 +359,14 @@ def printCypherTextHex(crypticAra):
     # retStr = ''.join(ret)
     # print("Hex : ",retStr)
     # return retStr
+
+def printCypherTextASCII(crypticAra):
+    ret = []
+    for i in range(len(crypticAra)):
+        cryptic1D = convert2DTo1D(crypticAra[i])
+        ret.extend(convertTo1DBitVectorASCII(cryptic1D))
+    print("ASCII : ",ret)
+
 def reconstruct2DfromHexAll(hexStrAra):
     ret = []
     for i in range(len(hexStrAra)):
@@ -363,26 +383,15 @@ def reconstruct2DfromHex(hexStr):
     hex2D = convertTo2DHexArray(hex1D)
     return hex2D
 
-def printCypherTextASCII(crypticAra):
-    ret = []
-    for i in range(len(crypticAra)):
-        cryptic1D = convert2DTo1D(crypticAra[i])
-        ret.append(convertTo1DBitVectorASCII(cryptic1D))
-    print("ASCII : ",ret)
-
-
 def AESEncrypt(aesLen,content,key):
     ## KEY
-    start_time = time.time()
     key = processKey(aesLen,key)
     # print("KEY GENERATION STARTED")
     allKeys = generateKey(aesLen,key)
-    key_scheduling_time = time.time() - start_time
     # printAllKeys(allKeys)
 
-    start_time = time.time()
     ## TEXT
-    text = convertTo1DHexArray(content)
+    text = convertTo1DHexArrayFile(content)
 
     # insert padding
     blockSize = aesLen//8
@@ -395,9 +404,8 @@ def AESEncrypt(aesLen,content,key):
     ## ENCRYPT
     print("ENCRYPTION STARTED")
     crypticAra = encryptAll(aesLen,text,allKeys)
-    encryption_time = time.time() - start_time
     hexStrAra = printCypherTextHex(crypticAra)
-    return hexStrAra , fillerCount, key_scheduling_time, encryption_time
+    return hexStrAra , fillerCount
 
 def AESDecrypt(aesLen,hexStrAra,key,fillerCount):
 
@@ -419,51 +427,26 @@ def AESDecrypt(aesLen,hexStrAra,key,fillerCount):
         decrpytic.pop()
         fillerCount -= 1
 
-    return decrpytic
-    
-
-
-def hexToASCII(hexStr):
-    binary_str = codecs.decode(hexStr, 'hex')
-    return str(binary_str,"ISO-8859-1")  
+    # print1DBitVectorASCII(decrpytic)
+    decrypted_blob = outputToFile(decrpytic)
+    return decrypted_blob
     
 def main():
-    key = "BUET CSE17 Batch"
-    text = "CanTheyDoTheirFe"
-    AES_TYPE = 256
     
-    # do aes encryption on text
-    hexStrAra, fillerCount, key_scheduling_time, encryption_time =  AESEncrypt(AES_TYPE, text , key)
+    key = "BUET CSE17 Batch"
+    
+    fd = open("demo.txt", "rb")
+    unencrypted_blob = fd.read()
+    fd.close()
 
-    # do aes decryption
-    start_time = time.time()
-    decrpytic = AESDecrypt(AES_TYPE, hexStrAra , key, fillerCount)
-    decryption_time = time.time() - start_time
-
-    print("Plain Text : ")
-    print(text," [In ASCII]")
-    print( ''.join(convertTo1DHexArray(text))," [In Hex]")
-    print("")
-
-    print("Key : ")
-    print(key," [In ASCII]")
-    print( ''.join(convertTo1DHexArray(key))," [In Hex]")
-    print("")
-
-    print("Cipher Text : ")
-    print(''.join(hexStrAra)," [In HEX]")
-    print(hexToASCII(''.join(hexStrAra))," [In ASCII]")
-    print("")
-
-    print("Deciphered Text : ")
-    print(''.join(convertTo1DBitVectorHex(decrpytic))," [In HEX]")
-    print(''.join(convertTo1DBitVectorASCII(decrpytic))," [In ASCII]")
-
-    print("Execution Time : ")
-    print("Key Scheduling Time : ",key_scheduling_time)
-    print("Encryption Time : ",encryption_time)
-    print("Decryption Time : ",decryption_time)
+    hexStrAra, fillerCount =  AESEncrypt(128, unencrypted_blob , key)
 
 
+    decrypted_blob = AESDecrypt(128, hexStrAra , key, fillerCount)
+    # Write the decrypted contents to a file
+    fd = open("demo_rev.txt", "wb")
+    fd.write(decrypted_blob)
+    fd.close() 
+    
 
 # main()
