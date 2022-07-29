@@ -25,14 +25,14 @@ s.listen(5)
 print ("socket is listening")      
 
 
-key = "BUET CSE17 Batch"
+key = "BUET CSE17 Fest1"
 text = "CanTheyDoTheirFest"
 
 # do aes encryption on text
 hexStrAra, fillerCount, _ , _=  AESEncrypt(128, text , key)
 
 # generate keys for RSA
-keyLength = 32
+keyLength = 128
 p1 , p2 = generatePrimes(keyLength//2)
 publicKey , privateKey = generateKeyPair(p1,p2)
 

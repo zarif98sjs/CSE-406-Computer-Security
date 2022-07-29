@@ -1,0 +1,16 @@
+sudo sysctl -w kernel.randomize_va_space=0
+sudo ln -sf /bin/zsh /bin/sh
+
+su root
+
+
+gcc -DBUF_SIZE=100 -m32 -o stack -z execstack -fno-stack-protector stack.c
+sudo chown root stack
+sudo chmod 4755 stack
+su seed
+
+
+touch badfile
+gcc -DBUF_SIZE=100 -m32 -o stack_dbg -g -z execstack -fno-stack-protector stack.c
+
+

@@ -430,7 +430,7 @@ def hexToASCII(hexStr):
 def main():
     key = "BUET CSE17 Batch"
     text = "CanTheyDoTheirFe"
-    AES_TYPE = 128
+    AES_TYPE = 256
     
     # do aes encryption on text
     hexStrAra, fillerCount, key_scheduling_time, encryption_time =  AESEncrypt(AES_TYPE, text , key)
@@ -450,10 +450,10 @@ def main():
     print( ''.join(convertTo1DHexArray(key))," [In Hex]")
     print("")
 
-    print("Cipher Text : ")
-    print(''.join(hexStrAra)," [In HEX]")
-    print(hexToASCII(''.join(hexStrAra))," [In ASCII]")
-    print("")
+    # print("Cipher Text : ")
+    # print(''.join(hexStrAra)," [In HEX]")
+    # print(hexToASCII(''.join(hexStrAra))," [In ASCII]")
+    # print("")
 
     print("Deciphered Text : ")
     print(''.join(convertTo1DBitVectorHex(decrpytic))," [In HEX]")
@@ -466,4 +466,4 @@ def main():
 
 
 
-# main()
+main()

@@ -83,7 +83,8 @@ def RSADecrypt(privateKey,ciphers):
 
 def main():
     
-    keyLengths = [16,32,64,128]
+    # keyLengths = [16,32,64,128]
+    keyLengths = [512]
     for keyLength in keyLengths:
         print("Key length: ",keyLength)
         start_time = time.time()

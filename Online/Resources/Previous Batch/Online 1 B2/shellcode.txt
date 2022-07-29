@@ -1,0 +1,9 @@
+shellcode_2 = (
+"\x6a\x04"             #push   4             (Setting Parameter x1 = 4)
+"\xbb\x44\x85\x04\x08" #mov    ebx,0x804853e (Move entry point of bar to edx)
+"\xff\xd3"             #call   ebx           (Call the function bar)
+
+"\x50"                 #push   eax           (Return value is stored at eax. 
+                       #                      Setting Paratemer x1 = last return value)
+"\xff\xd3"             #call   ebx           (Calling bar again)
+).encode('latin-1')

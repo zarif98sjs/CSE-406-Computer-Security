@@ -1,0 +1,28 @@
+disas <function_name> 
+#prints the assembly dump along with address
+
+b <function_name>
+#set the breakpoint at the first instruction of the specified function
+
+b *0x<address>
+#set the breakpoint at the specified address
+
+run
+#program will pause execution at the breakpoint
+
+stepi
+#execute next instruction and pause
+
+continue
+#pause at next breakpoint
+
+p $RegisterName
+p &Variable
+#prints the address of the register/variable
+
+p (*(unsigned *)$RegisterName)
+p (*(unsigned *)&Variable)
+#prints the content of the register/variable
+
+q
+#quit from gdb
