@@ -1,1 +1,0 @@
-cmd_/home/seed/Desktop/Firewall_Practice/1_B_2/printall_hooks.ko := ld -r  -m elf_x86_64  --build-id=sha1  -T scripts/module.lds -o /home/seed/Desktop/Firewall_Practice/1_B_2/printall_hooks.ko /home/seed/Desktop/Firewall_Practice/1_B_2/printall_hooks.o /home/seed/Desktop/Firewall_Practice/1_B_2/printall_hooks.mod.o;  true
