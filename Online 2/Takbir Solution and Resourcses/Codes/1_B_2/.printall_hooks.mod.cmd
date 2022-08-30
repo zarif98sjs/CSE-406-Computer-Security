@@ -1,0 +1,1 @@
+cmd_/home/seed/Desktop/Firewall_Practice/1_B_2/printall_hooks.mod := { echo  /home/seed/Desktop/Firewall_Practice/1_B_2/printall_hooks.o;  echo; } > /home/seed/Desktop/Firewall_Practice/1_B_2/printall_hooks.mod

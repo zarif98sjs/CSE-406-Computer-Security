@@ -1,0 +1,24 @@
+// Rules for router
+
+    iptables -A FORWARD -i eth0 -p tcp --dport 22 -j DROP     // 1
+    iptables -A FORWARD -i eth1 -p tcp --sport 22 -j DROP  
+
+    iptables -A FORWARD -i eth0 -s 10.9.0.5 -d 192.168.60.6 -p tcp --dport 23 -j ACCEPT // 4 ?
+    iptables -A FORWARD -i eth1 -s 192.168.60.6 -d 10.9.0.5 -p tcp --sport 23 -j ACCEPT
+
+    iptables -A INPUT -d 10.9.0.11 -p tcp --dport 22 -j DROP       // 2
+    iptables -A INPUT -d 192.168.60.11 -p tcp --dport 22 -j DROP
+
+
+// Rules for 10.9.0.1
+    iptables -A OUTPUT -p icmp --icmp-type echo-request -j DROP  // 6
+    iptables -A INPUT -p icmp --icmp-type echo-request -j DROP   // 7
+
+
+// All hosts but 10.9.0.5
+    iptables -A OUTPUT -p tcp --dport 23 -j DROP     // 5
+    iptables -A OUTPUT -p icmp --icmp-type echo-request -j DROP  // 8 
+
+iptables -P OUTPUT ACCEPT
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT

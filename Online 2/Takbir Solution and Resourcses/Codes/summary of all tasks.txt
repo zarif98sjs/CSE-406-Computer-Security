@@ -1,0 +1,298 @@
+Network Topology:
+
+---------------------------------------------
+    |            |                 |
+    |            |                 |
+ 10.9.0.1     10.9.0.5         10.9.0.11 (router) eth0
+(attacker)                         |
+                                   |     
+                             192.168.60.11 (router) eth1 
+								   |
+								   |
+				------------------------------------
+				    |             |             |
+					|             |             |
+			  192.168.60.5   192.168.60.6   192.169.60.7
+
+--------------------------------------------------------------------------------------------------------------
+
+task 1A
+
+hello.c
+Makefile
+sudo insmod hello.ko (inserting a module)
+lsmod | grep hello (list modules)
+sudo rmmod hello (remove the module)
+dmesg (check the messages)
+
+--------------------------------------------------------------------------------------------------------------
+
+task 1B1
+
+my_simple_firewall.c
+change makefile .o name
+sudo insmod my_simple_firewall.ko
+lsmod | grep my_simple_firewall
+dig @8.8.8.8 www.facebook.com
+sudo rmmod my_simple_firewall 
+dmesg
+
+[ 1336.954496] Registering filters.
+[ 1343.388441] *** LOCAL_IN
+[ 1343.388444]     127.0.0.1  --> 127.0.0.1 (UDP)
+[ 1343.392904] *** Dropping 8.8.8.8 (UDP), port 53
+[ 1352.489376] The filters are being removed.
+
+--------------------------------------------------------------------------------------------------------------
+
+task 1B2
+
+printall_hooks.c
+
+ping 8.8.8.8
+
+[ 2317.946456] *** LOCAL_OUT
+[ 2317.946459]     10.0.2.8  --> 8.8.8.8 (ICMP)
+[ 2317.946472] *** POST_ROUTING
+[ 2317.946472]     10.0.2.8  --> 8.8.8.8 (ICMP)
+[ 2318.078784] *** PRE_ROUTING
+[ 2318.079087]     8.8.8.8  --> 10.0.2.8 (ICMP)
+[ 2318.079216] *** LOCAL_IN
+[ 2318.079391]     8.8.8.8  --> 10.0.2.8 (ICMP)
+
+dig @8.8.8.8 www.facebook.com
+
+[  285.484249] *** LOCAL_OUT
+[  285.484253]     10.0.2.8  --> 8.8.8.8 (ICMP)
+[  285.484267] *** POST_ROUTING
+[  285.484268]     10.0.2.8  --> 8.8.8.8 (ICMP)
+[  285.520781] *** PRE_ROUTING
+[  285.520786]     8.8.8.8  --> 10.0.2.8 (ICMP)
+[  285.520801] *** LOCAL_IN
+[  285.520802]     8.8.8.8  --> 10.0.2.8 (ICMP)
+[  286.486625] *** LOCAL_OUT
+[  286.486629]     10.0.2.8  --> 8.8.8.8 (ICMP)
+[  286.486722] *** POST_ROUTING
+[  286.486723]     10.0.2.8  --> 8.8.8.8 (ICMP)
+[  286.523922] *** PRE_ROUTING
+[  286.523929]     8.8.8.8  --> 10.0.2.8 (ICMP)
+
+NF_INET_PRE_ROUTING: incoming packets pass this hook in the () function before they are processed by the routing code. ip_rcv()``linux/net/ipv4/ip_input.c
+
+NF_INET_LOCAL_IN: all incoming packets addressed to the local computer pass this hook in the function . ip_local_deliver()
+
+NF_INET_FORWARD: incoming packets are passed this hook in the function . ip_forwared()
+
+NF_INET_LOCAL_OUT: all outgoing packets created in the local computer pass this hook in the function . ip_build_and_send_pkt()
+
+NF_INET_POST_ROUTING: this hook in the ipfinishoutput() function before they leave the computer.
+
+--------------------------------------------------------------------------------------------------------------
+
+task 1B3
+
+no_host_telnet_ping.c
+
+dcup
+docksh 69
+ping 10.9.0.1 -> works
+telnet 10.9.01 -> works
+
+sudo insmod no_host_telnet_ping
+ping 10.9.0.1 -> does not work
+telnet 10.9.01 -> does not work
+
+sudo rmmod no_host_telnet_ping
+ping 10.9.0.1 -> works
+telnet 10.9.01 -> works
+
+--------------------------------------------------------------------------------------------------------------
+
+ip tables codes:
+
+// List all the rules in a table (without line number)
+iptables -t nat -L -n
+
+// List all the rules in a table (with line number)
+iptables -t filter -L -n --line-numbers
+
+// Delete rule No. 2 in the INPUT chain of the filter table
+iptables -t filter -D INPUT 2
+
+// Drop all the incoming packets that satisfy the <rule>
+iptables -t filter -A INPUT <rule> -j DROP
+
+--------------------------------------------------------------------------------------------------------------
+
+task 2A
+
+prevent outside machines from accessing the router machine, except ping
+
+docksh into router container
+iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
+iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
+iptables -P OUTPUT DROP ➙ Set default rule for OUTPUT
+iptables -P INPUT DROP ➙ Set default rule for INPUT
+
+docksh into 10.9.0.5
+ping 10.9.0.11 -> succeeds
+telnet 10.9.0.11 -> fails
+
+CLEANUP: 
+iptables -F && iptables -P OUTPUT ACCEPT && iptables -P INPUT ACCEPT
+
+--------------------------------------------------------------------------------------------------------------
+
+task 2B
+
+1. Outside hosts cannot ping internal hosts.
+2. Outside hosts can ping the router.
+3. Internal hosts can ping outside hosts.
+4. All other packets between the internal and external networks should be blocked.
+
+iptables -A FORWARD -i eth0 -p icmp --icmp-type echo-request -j DROP     -- this line is overkill
+iptables -A FORWARD -i eth1 -p icmp --icmp-type echo-request -j ACCEPT
+iptables -A FORWARD -i eth0 -p icmp --icmp-type echo-reply -j ACCEPT
+iptables -P FORWARD DROP
+
+ping/telnet from 10.5.0.9 to 192.168.60.5 does not work
+ping from 192.168.60.5 to 10.5.0.9 works
+telnet from 192.168.60.5 to 10.5.0.9 does not work
+ping/telnet to router works from each network
+
+CLEANUP: 
+iptables -F && iptables -P FORWARD ACCEPT
+
+--------------------------------------------------------------------------------------------------------------
+
+task 2C
+
+1. All the internal hosts run a telnet server (listening to port 23). Outside hosts can only access the telnet
+server on 192.168.60.5, not the other internal hosts.
+2. Outside hosts cannot access other internal servers.
+3. Internal hosts can access all the internal servers.
+4. Internal hosts cannot access external servers.
+5. In this task, the connection tracking mechanism is not allowed. It will be used in a later task.
+
+iptables -A FORWARD -i eth0 -d 192.168.60.5 -p tcp --dport 23 -j ACCEPT
+iptables -A FORWARD -i eth1 -s 192.168.60.5 -p tcp --sport 23 -j ACCEPT
+iptables -A FORWARD -i eth0 -p tcp --dport 23 -j DROP  
+iptables -A FORWARD -i eth1 -p tcp --sport 23 -j DROP                     -- probably overkill
+iptables -A FORWARD -i eth0 -p tcp --sport 23 -j DROP  
+iptables -A FORWARD -i eth1 -p tcp --dport 23 -j DROP					  -- probably overkill
+iptables -P FORWARD ACCEPT
+===============================
+iptables -A FORWARD -i eth0 -d 192.168.60.5 -p tcp --dport 23 -j ACCEPT
+iptables -A FORWARD -i eth1 -s 192.168.60.5 -p tcp --sport 23 -j ACCEPT
+iptables -P FORWARD DROP
+
+CLEANUP: 
+iptables -F && iptables -P FORWARD ACCEPT
+
+--------------------------------------------------------------------------------------------------------------
+
+task 3A
+
+// On 10.9.0.5, send out ICMP packets
+# ping 192.168.60.5
+
+// On router 
+# conntrack -L
+icmp     1 29 src=10.9.0.5 dst=192.168.60.5 type=8 code=0 id=32 src=192.168.60.5 dst=10.9.0.5 type=0 code=0 id=32 mark=0 use=1
+conntrack v1.4.5 (conntrack-tools): 1 flow entries have been shown.
+
+
+// On 192.168.60.5, start a netcat UDP server
+# nc -lu 9090
+
+// On 10.9.0.5, send out UDP packets
+# nc -u 192.168.60.5 9090
+<type something, then hit return>
+<output seen on 192.168.60.5>
+
+# conntrack -L
+udp      17 23 src=10.9.0.5 dst=192.168.60.5 sport=39988 dport=9090 [UNREPLIED] src=192.168.60.5 dst=10.9.0.5 sport=9090 dport=39988 mark=0 use=1
+conntrack v1.4.5 (conntrack-tools): 1 flow entries have been shown.
+
+--------------------------------------------------------------------------------------------------------------
+
+task 3B1
+
+THEORY:
+	The rule allows TCP packets belonging to an existing connection to pass through:
+		iptables -A FORWARD -p tcp -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+		
+	The rule above does not cover the SYN packets, which do not belong to any established connection.
+	Without it, we will not be able to create a connection in the first place. Therefore, we need to add a rule to
+	accept incoming SYN packet:
+		iptables -A FORWARD -p tcp -i eth0 --dport 8080 --syn -m conntrack --ctstate NEW -j ACCEPT
+		
+	Finally, we will set the default policy on FORWARD to drop everything. This way, if a packet is not
+	accepted by the two rules above, they will be dropped.
+		iptables -P FORWARD DROP
+
+// On 192.168.60.5 
+nc -l 8080
+
+// On 10.9.0.5
+nc 192.168.60.5 8080
+<type something, then hit return>
+<output seen on 192.168.60.5>
+
+CLEANUP: 
+iptables -F && iptables -P FORWARD ACCEPT
+
+--------------------------------------------------------------------------------------------------------------
+
+task 3B2
+
+1. All the internal hosts run a telnet server (listening to port 23). Outside hosts can only access the telnet
+server on 192.168.60.5, not the other internal hosts.
+2. Outside hosts cannot access other internal servers.
+3. Internal hosts can access all the internal servers.
+4. Internal hosts cannot access external servers.      - not required anymore
+5. In this task, the connection tracking mechanism is not allowed. It will be used in a later task. - not required anymore
+6. Please rewrite the firewall rules in Task 2.C, but this time, we will add a rule allowing internal hosts to
+visit any external server
+
+iptables -A FORWARD -i eth0 -d 192.168.60.5 -p tcp --dport 23 -j ACCEPT
+iptables -A FORWARD -i eth1 -s 192.168.60.5 -p tcp --sport 23 -j ACCEPT
+iptables -A FORWARD -p tcp -i eth1 --syn -m conntrack --ctstate NEW -j ACCEPT
+iptables -A FORWARD -p tcp -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -P FORWARD DROP
+
+CLEANUP: 
+iptables -F && iptables -P FORWARD ACCEPT
+
+--------------------------------------------------------------------------------------------------------------
+
+Task 4
+
+// docksh into router container
+iptables -A FORWARD -s 10.9.0.5 -m limit --limit 10/minute --limit-burst 5 -j ACCEPT
+iptables -A FORWARD -s 10.9.0.5 -j DROP
+
+# ping 192.168.60.6
+PING 192.168.60.6 (192.168.60.6) 56(84) bytes of data.
+64 bytes from 192.168.60.6: icmp_seq=1 ttl=63 time=0.173 ms
+64 bytes from 192.168.60.6: icmp_seq=2 ttl=63 time=0.060 ms
+64 bytes from 192.168.60.6: icmp_seq=3 ttl=63 time=0.090 ms
+64 bytes from 192.168.60.6: icmp_seq=4 ttl=63 time=0.061 ms
+64 bytes from 192.168.60.6: icmp_seq=5 ttl=63 time=0.120 ms
+64 bytes from 192.168.60.6: icmp_seq=7 ttl=63 time=0.111 ms     - icmp_seq lost due to burst filter
+64 bytes from 192.168.60.6: icmp_seq=13 ttl=63 time=0.068 ms
+64 bytes from 192.168.60.6: icmp_seq=19 ttl=63 time=0.114 ms
+
+CLEANUP: 
+iptables -F && iptables -P FORWARD ACCEPT
+
+--------------------------------------------------------------------------------------------------------------
+
+Task 5 - not required for online. uses iptables for other applications - load balancing (not firewall)
+
+CLEANUP:
+8hrs of sleep
+
+--------------------------------------------------------------------------------------------------------------
+
+

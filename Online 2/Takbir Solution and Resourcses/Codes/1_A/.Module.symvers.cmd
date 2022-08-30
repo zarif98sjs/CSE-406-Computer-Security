@@ -1,0 +1,1 @@
+cmd_/home/seed/Desktop/Firewall_Practice/1_A/Module.symvers := sed 's/\.ko$$/\.o/' /home/seed/Desktop/Firewall_Practice/1_A/modules.order | scripts/mod/modpost -m -a  -o /home/seed/Desktop/Firewall_Practice/1_A/Module.symvers -e -i Module.symvers   -T -

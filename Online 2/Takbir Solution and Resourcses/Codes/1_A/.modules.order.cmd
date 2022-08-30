@@ -1,0 +1,1 @@
+cmd_/home/seed/Desktop/Firewall_Practice/1_A/modules.order := {   echo /home/seed/Desktop/Firewall_Practice/1_A/hello.ko; :; } | awk '!x[$$0]++' - > /home/seed/Desktop/Firewall_Practice/1_A/modules.order

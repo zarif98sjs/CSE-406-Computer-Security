@@ -1,0 +1,14 @@
+//only contains rules for router. You also have to write host specific rules
+iptables -A FORWARD -i eth0 -p tcp --dport 22 -j DROP
+iptables -A INPUT -p tcp --dport 22 -j DROP
+
+
+iptables -A FORWARD -p tcp --dport 23 -j DROP
+iptables -A FORWARD -i eth0 -s 10.9.0.5 -d 192.168.60.6 -p tcp --dport 23 -j ACCEPT
+iptables -A FORWARD -i eth1 -s 192.168.60.6 -d 10.9.0.5 -p tcp --sport 23 -j ACCEPT
+
+
+iptables -A FORWARD -i eth0 -s 10.9.0.5 -p icmp --icmp-type echo-request -j ACCEPT
+iptables -A FORWARD -i eth1 -d 10.9.0.5 -p icmp --icmp-type echo-reply -j ACCEPT
+iptables -A FORWARD -i eth0 -p icmp --icmp-type echo-request -j DROP
+iptables -A FORWARD -i eth1 -p icmp --icmp-type echo-request -j DROP
